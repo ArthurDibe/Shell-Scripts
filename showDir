@@ -1,0 +1,113 @@
+# ########################################################
+#
+# Developer: Dibe
+# 
+# Script Description:
+#
+# 		This script display the list of the directoryes
+# 		in a directory path chain in a formated way
+#     The script will highlight the directories that
+#     do not give passthrough permission for other users
+# 		The directory`s name is expected as an argument
+#		and It can be absolute or relative path
+#		
+# How to run the script:
+#
+#		showDir dirctoryNamePath
+#		
+# ########################################################
+
+
+#!/bin/bash
+
+############# FUNCTIONS SCRIPTS #############
+function titleDisplay()
+{
+	echo
+	echo "  Owner   Group   Other   Filename  "
+	echo "  -----   -----   -----   --------  "
+}
+
+function getDirectories()
+{
+	local originalLocation=$(pwd)
+	cd $1
+	fileList=
+	fileList+=$(echo $(pwd) | sed 's/\//\t/g') #make a list with file names
+
+	cd $originalLocation
+}
+
+function displayCurrentDetails()
+{
+		echo -n "$fileType$userPerm $groupPerm $otherPerm " | sed 's/\(.\{1\}\)/\1 /g'
+		dirName=$(echo "$(echo $1 | rev | cut -d'/' -f2 | rev)")
+		[[ -z $currDirName ]] && echo "/" || echo "$currDirName"
+}
+
+
+############# MAIN SCRIPT #############
+fileList=
+case $# in
+	0)
+		titleDisplay
+		getDirectories $(pwd)
+	;;
+	1)
+		if [ -d $1 ]
+		then
+			titleDisplay
+			getDirectories $1
+			shift
+		else
+			echo -e "showDir: $1 is not a valid directory name"	
+			exit 1
+		fi
+	;;
+	*)
+		echo -e "Usage: showDir [ dir-name ]"
+		exit 1
+	;;
+esac
+
+
+# COUNT the number of files
+END=$(echo "$fileList" | sed 's/\t/\n/g ; s/\n$//' | wc -l)
+
+currDirPath=
+for i in $(seq $END)
+do
+	
+	# GET current directory name
+	currDirName=$(echo -e "$fileList" | cut -f$i)
+	
+	# GET current directory path
+	currDirPath+="$currDirName/"
+
+	# GET current permissions
+	currPermission=$(ls -ld $currDirPath | cut -f$i)
+	
+	
+	# get the file type
+	fileType=$(echo "$currPermission" | cut -c1)
+	# get the user permissions
+	userPerm=$(echo "$currPermission" | cut -c2-4)
+	# get group permissions
+	groupPerm=$(echo "$currPermission" | cut -c5-7)
+	# get others permissions
+	otherPerm=$(echo "$currPermission" | cut -c8-10)
+	# get others` character execution bit permission
+	otherExe=$(echo "$otherPerm" | rev | cut -c1)
+	
+	# highlight if other does not have passthrough permission
+	if [ "$otherExe" == "-" ]
+	then
+		tput smso # set highlight
+		displayCurrentDetails
+		tput rmso # unset highlight
+	else
+		displayCurrentDetails
+	fi
+done
+
+echo	# print an empty line
