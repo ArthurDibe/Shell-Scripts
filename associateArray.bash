@@ -1,3 +1,21 @@
+# ########################################################
+#
+# Developer: Dibe
+# 
+# Script Description:
+#
+# 		This script was created to demonstrate how
+#       declare, add data and retrieve data 
+#       from an associative array
+#
+#		
+# How to run the script:
+#
+#		./associateArray.bash
+#
+#		
+# ########################################################
+
 #!/bin/bash
 
 declare -A users
